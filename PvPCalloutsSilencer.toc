@@ -1,0 +1,9 @@
+## Interface: 120005
+## Title: PvPCallouts Silencer
+## Notes: Suppresses addon taint error spam and arena/battleground join spam.
+## Author: Clawd
+## Version: 1.4.0
+## OptionalDeps: PvPCallouts, BugGrabber, BugSack
+## SavedVariables: PvPCalloutsSilencerDB
+
+PvPCalloutsSilencer.lua
