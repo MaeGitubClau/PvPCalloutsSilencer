@@ -19,6 +19,9 @@ It does two things:
 Version 1.5.0 also catches addon-direct chat messages, not only normal Blizzard
 chat events. This helps when another addon writes the spam directly to chat.
 
+Version 1.5.1 prevents protected WoW secret-string chat text from creating a
+new Lua error while the addon is checking messages.
+
 Install:
 
 1. Put the PvPCalloutsSilencer folder in:

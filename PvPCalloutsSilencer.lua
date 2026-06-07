@@ -31,11 +31,15 @@ local function IsTaintError(message)
         return false
     end
 
-    return message:find("tainted", 1, true)
-        or message:find("execution tainted by", 1, true)
-        or message:find("cannot be accessed while tainted", 1, true)
-        or message:find("has been blocked from an action only available to the Blizzard UI", 1, true)
-        or message:find("Interface action failed because of an AddOn", 1, true)
+    local ok, isTaint = pcall(function()
+        return message:find("tainted", 1, true)
+            or message:find("execution tainted by", 1, true)
+            or message:find("cannot be accessed while tainted", 1, true)
+            or message:find("has been blocked from an action only available to the Blizzard UI", 1, true)
+            or message:find("Interface action failed because of an AddOn", 1, true)
+    end)
+
+    return ok and isTaint
 end
 
 local function InstallErrorFilter()
@@ -78,11 +82,19 @@ local function NormalizeMessage(message)
         return nil
     end
 
-    return message
-        :gsub("|c%x%x%x%x%x%x%x%x", "")
-        :gsub("|r", "")
-        :gsub("|H.-|h(.-)|h", "%1")
-        :lower()
+    local ok, normalized = pcall(function()
+        return message
+            :gsub("|c%x%x%x%x%x%x%x%x", "")
+            :gsub("|r", "")
+            :gsub("|H.-|h(.-)|h", "%1")
+            :lower()
+    end)
+
+    if not ok then
+        return nil
+    end
+
+    return normalized
 end
 
 local function IsJoinSpam(message)
@@ -93,7 +105,11 @@ local function IsJoinSpam(message)
     end
 
     for _, text in ipairs(joinPatterns) do
-        if normalized:find(text, 1, true) then
+        local ok, found = pcall(function()
+            return normalized:find(text, 1, true)
+        end)
+
+        if ok and found then
             return true
         end
     end

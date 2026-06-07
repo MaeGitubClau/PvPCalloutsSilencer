@@ -15,6 +15,7 @@ common taint errors from other addons too.
   - `Interface action failed because of an AddOn`
 - Filters repeated arena and battleground join/enter/leave notices.
 - Catches addon-direct chat messages as well as normal Blizzard chat events.
+- Avoids throwing errors when WoW passes protected secret-string chat text.
 - Adds an in-game options menu under `Options > AddOns > PvPCallouts Silencer`.
 - Keeps slash commands as a backup.
 
