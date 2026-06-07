@@ -60,24 +60,40 @@ local function InstallErrorFilter()
     end)
 end
 
+local hookedFrames = {}
+
 local joinPatterns = {
-    "^.+ has joined the instance group%.$",
-    "^.+ has joined the battle%.$",
-    "^.+ has joined the arena%.$",
-    "^.+ has joined the battleground%.$",
-    "^.+ has entered the arena%.$",
-    "^.+ has entered the battleground%.$",
-    "^.+ has left the arena%.$",
-    "^.+ has left the battleground%.$",
+    "has joined the instance group",
+    "has joined the battle",
+    "has joined the arena",
+    "has joined the battleground",
+    "has entered the arena",
+    "has entered the battleground",
+    "has left the arena",
+    "has left the battleground",
 }
 
-local function IsJoinSpam(message)
+local function NormalizeMessage(message)
     if type(message) ~= "string" then
+        return nil
+    end
+
+    return message
+        :gsub("|c%x%x%x%x%x%x%x%x", "")
+        :gsub("|r", "")
+        :gsub("|H.-|h(.-)|h", "%1")
+        :lower()
+end
+
+local function IsJoinSpam(message)
+    local normalized = NormalizeMessage(message)
+
+    if not normalized then
         return false
     end
 
-    for _, pattern in ipairs(joinPatterns) do
-        if message:match(pattern) then
+    for _, text in ipairs(joinPatterns) do
+        if normalized:find(text, 1, true) then
             return true
         end
     end
@@ -93,6 +109,41 @@ local function ChatFilter(_, _, message)
     end
 
     return IsJoinSpam(message)
+end
+
+local function ShouldSuppressChatText(message)
+    EnsureDB()
+
+    return PvPCalloutsSilencerDB.enabled
+        and PvPCalloutsSilencerDB.suppressJoinMessages
+        and IsJoinSpam(message)
+end
+
+local function HookChatFrame(chatFrame)
+    if not chatFrame or hookedFrames[chatFrame] or type(chatFrame.AddMessage) ~= "function" then
+        return
+    end
+
+    local originalAddMessage = chatFrame.AddMessage
+    chatFrame.AddMessage = function(self, message, ...)
+        if ShouldSuppressChatText(message) then
+            return
+        end
+
+        return originalAddMessage(self, message, ...)
+    end
+
+    hookedFrames[chatFrame] = true
+end
+
+local function HookChatFrames()
+    if type(NUM_CHAT_WINDOWS) == "number" then
+        for index = 1, NUM_CHAT_WINDOWS do
+            HookChatFrame(_G["ChatFrame" .. index])
+        end
+    end
+
+    HookChatFrame(DEFAULT_CHAT_FRAME)
 end
 
 local function RefreshOptionsPanel()
@@ -234,7 +285,13 @@ end
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
+frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:SetScript("OnEvent", function(_, event, addonName)
+    if event == "PLAYER_ENTERING_WORLD" then
+        HookChatFrames()
+        return
+    end
+
     if event ~= "ADDON_LOADED" or addonName ~= ADDON_NAME then
         return
     end
@@ -242,6 +299,7 @@ frame:SetScript("OnEvent", function(_, event, addonName)
     EnsureDB()
     InstallErrorFilter()
     RegisterOptionsPanel()
+    HookChatFrames()
     ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", ChatFilter)
     ChatFrame_AddMessageEventFilter("CHAT_MSG_BG_SYSTEM_ALLIANCE", ChatFilter)
     ChatFrame_AddMessageEventFilter("CHAT_MSG_BG_SYSTEM_HORDE", ChatFilter)

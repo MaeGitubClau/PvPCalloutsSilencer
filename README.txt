@@ -16,6 +16,9 @@ It does two things:
    "Player has joined the battle."
    "Player has entered the arena."
 
+Version 1.5.0 also catches addon-direct chat messages, not only normal Blizzard
+chat events. This helps when another addon writes the spam directly to chat.
+
 Install:
 
 1. Put the PvPCalloutsSilencer folder in:

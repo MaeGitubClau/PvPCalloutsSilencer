@@ -14,6 +14,7 @@ common taint errors from other addons too.
   - `blocked from an action only available to the Blizzard UI`
   - `Interface action failed because of an AddOn`
 - Filters repeated arena and battleground join/enter/leave notices.
+- Catches addon-direct chat messages as well as normal Blizzard chat events.
 - Adds an in-game options menu under `Options > AddOns > PvPCallouts Silencer`.
 - Keeps slash commands as a backup.
 
